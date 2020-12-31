@@ -56,12 +56,12 @@ const AllResolutions = () => {
               return <li key={i}><span style={{fontWeight: 500, color: 'gray'}}>{person}</span>: {count}</li>
             })}
           </ul>
-          <h2 style={{textAlign: 'center', margin: '0', padding: '0.5em' }}>All resolutions</h2>
-          <ul style={{lineHeight: '2em'}}>
+          <h2 style={{textAlign: 'center', margin: '0', padding: '0.5em' }}>All resolutions ({resolutions.length})</h2>
+          <ol style={{lineHeight: '2em', paddingBottom: '2em'}}>
             {resolutions.map((submission) => {
               return <li key={submission.id}>{submission.resolution}</li>
             })}
-          </ul>
+          </ol>
         </div>
       </main>
     </div>
