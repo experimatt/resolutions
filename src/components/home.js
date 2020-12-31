@@ -8,7 +8,7 @@ const Home = () => {
   const [players, setPlayers] = useState([])
   const [gameInProgress, setGameInProgress] = useState(false)
 
-  const gameDefaults = {players: [], resolutions: [], usedResolutions: [], currentPlayer: null}
+  const gameDefaults = {players: [], resolutions: [], currentPlayer: null}
   const [activeGame, setActiveGame] = useState(gameDefaults)
 
   useEffect(() => {
@@ -55,7 +55,6 @@ const Home = () => {
       players: shuffledPlayers,
       currentPlayer: shuffledPlayers[0],
       resolutions: _shuffle(resolutions),
-      drawnResolutions: []
     })
   }
 
@@ -65,19 +64,20 @@ const Home = () => {
     setActiveGame(gameDefaults)
   }
 
-  if (gameInProgress) {
-    console.log('activeGame',activeGame)
-  }
+  const currentPlayerIndex = gameInProgress ? _findIndex(activeGame?.players, {id: activeGame?.currentPlayer.id}) : null
+
+  const nextPlayerIndex = currentPlayerIndex +1 >= activeGame?.players?.length ? 0 : currentPlayerIndex + 1
+
+  const getFirstName = (player) => { return player?.name.split(' ')[0] }
+
+  const nextResolutionButtonText = `${activeGame.resolutions.length === 2 ? 'Last one!' : 'Next resolution'} (${getFirstName(activeGame?.players[nextPlayerIndex])})`
 
   const nextResolution = (e) => {
     e.preventDefault()
-    const { players, currentPlayer, resolutions } = activeGame
+    const { players, resolutions } = activeGame
     var nextResolutions = resolutions.slice(1)
 
     // next player
-    const numPlayers = players.length
-    const currentPlayerIndex = _findIndex(players, {id: currentPlayer.id})
-    const nextPlayerIndex = currentPlayerIndex === numPlayers ? 0 : currentPlayerIndex + 1
     // const nextPlayerId = players[nextPlayerIndex].id
 
     // next resolution
@@ -85,61 +85,85 @@ const Home = () => {
     //   nextResolutions.push(nextResolutions.shift())
     // }
 
-    setActiveGame({
-      currentPlayer: players[nextPlayerIndex],
-      resolutions: nextResolutions,
-      players: players
-    })
+    if (nextResolutions.length) {
+      setActiveGame({
+        currentPlayer: players[nextPlayerIndex],
+        resolutions: nextResolutions,
+        players: players
+      })
+    } else{
+      setActiveGame(gameDefaults)
+    }
   }
 
   return (
     <div>
       <main>
-        <h1 style={{textAlign: 'center', margin: '0', padding: '1em 1em 0.25em' }}>Resolutions Game</h1>
+        <h1 style={{textAlign: 'center', margin: 0, padding: '1em 1em 0.25em' }}>Resolutions Game</h1>
         <div style={{textAlign: 'center', fontSize: '0.9em', fontStyle: 'italic', color: 'gray'}}>
           Strauss family new years, Jan 1, 2021
         </div>
         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', flexFlow: 'column wrap'}}>
-          <div style={{padding: '1em'}}>The game is {gameInProgress ? 'currently' : 'not currently'} in progress.</div>
-            {
-              gameInProgress ? (
-              <>
-                <div style={{padding: '1em'}}>
-                  {activeGame.players?.length} players; {activeGame.resolutions?.length} total resolutions; {activeGame.drawnResolutions?.length} resolutions drawn;
-                </div>
-                <div style={{border: 'solid 1px blue', width: '640px', padding: '1em', margin: '1em', backgroundColor: '#F3F4F6'}}>
-                  <div style={{textAlign: 'center', padding: '0.5em', color: '#4B5563', fontWeight: '600'}}>
-                    {activeGame.currentPlayer.name}
+          {
+            gameInProgress ? (
+            <>
+              <div style={{padding: '1em'}}>
+                Game started with {activeGame.players?.length} players and{' '}
+                {resolutions?.length} resolutions.{' '}
+                {activeGame.resolutions?.length} resolutions remain.
+              </div>
+              <div
+                style={{border: 'solid 1px #3B82F6', width: '640px', padding: '2em 4em', margin: '0.5em', backgroundColor: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexFlow: 'column wrap'}}
+              >
+                <div
+                  style={{textAlign: 'left', padding: '0.5em', fontWeight: '600', lineHeight: '2em'}}
+                >
+                  <div
+                    style={{color: '#1F2937', fontSize: '1.4em', marginRight: '0.5em', fontWeight: '600', padding: '0.5em 0' }}
+                  >
+                    {`${getFirstName(activeGame?.currentPlayer)} resolves to...`}
                   </div>
-                  <h2>
-                    {activeGame.resolutions[0].resolution}
-                  </h2>
-                  <div style={{padding: '1em'}}>
-                    <button onClick={nextResolution} style={{fontSize: '1.2em', fontWeight: 700, padding: '0.5em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                      Next resolution
-                    </button>
+                  <div
+                    style={{color: '#1D4ED8', fontSize: '1.8em', padding: '0.5em 0'}}
+                  >
+                    {activeGame.resolutions[0].resolution.replace('I resolve to ','')}
                   </div>
                 </div>
-                <h2 style={{textAlign: 'center', margin: '0', padding: '0.5em' }}>Player order</h2>
-                <ol style={{lineHeight: '2em'}}>
-                  { activeGame.players.map((person) => {
-                    return <li key={person.id} style={{fontWeight: 500, color: activeGame.currentPlayer?.id === person.id ? 'black' : 'gray'}}>{person.name}</li>
-                  })}
-                </ol>
                 <div style={{padding: '1em'}}>
-                  <button onClick={handleStopGame} style={{fontSize: '1.5em', fontWeight: 700, padding: '0.5em', cursor: 'pointer'}}>
-                    Stop game!
+                  <button
+                    onClick={nextResolution}
+                    style={{fontSize: '1.2em', fontWeight: 700, padding: '0.5em 1em', cursor: 'pointer', color: '#4B5563'}}
+                    disabled={activeGame.resolutions.length === 1}
+                  >
+                    {nextResolutionButtonText}
                   </button>
                 </div>
-              </>
-            ) : (
+              </div>
+              <h2 style={{textAlign: 'center', margin: 0, padding: '0.5em' }}>Player order</h2>
+              <ol style={{lineHeight: '2em', margin: 0}}>
+                { activeGame.players.map((person) => {
+                  return <li key={person.id} style={{fontWeight: 500, color: activeGame.currentPlayer?.id === person.id ? 'black' : 'gray'}}>{person.name}</li>
+                })}
+              </ol>
+              <div style={{padding: '2em 1em'}}>
+                <button onClick={handleStopGame} style={{fontSize: '1.5em', fontWeight: 700, padding: '0.5em 1em', cursor: 'pointer'}}>
+                  Stop game!
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
               <div style={{padding: '1em'}}>
-                <button onClick={handleStartGame} style={{fontSize: '1.8em', fontWeight: 700, padding: '0.5em', cursor: 'pointer'}}>
+                There is no game in progress.
+              </div>
+              <div style={{padding: '1em'}}>
+                <button onClick={handleStartGame} style={{fontSize: '1.8em', fontWeight: 700, padding: '0.5em 1em', cursor: 'pointer'}}>
                   Start game!
                 </button>
               </div>
-            )
-          }
+            </>
+          )
+        }
         </div>
       </main>
     </div>
