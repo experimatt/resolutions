@@ -1,40 +1,23 @@
 import { useState, useEffect } from 'react'
-import Airtable from 'airtable'
+import { loadAirtableData } from '../utils/airtable'
 
 const AllResolutions = () => {
   const [resolutions, setResolutions] = useState([])
   const [players, setPlayers] = useState([])
 
   useEffect(() => {
-    const base = new Airtable({apiKey: process.env.REACT_APP_AIRTABLE_API_KEY}).base('appZoPqIzmHPJRrvY');
-
-    const loadAirtableData = async (tableName, onSuccess) => {
-      await base(tableName).select({
-        pageSize: 100,
-        maxRecords: 100,
-        view: 'Grid view'
-      }).eachPage((records, fetchNextPage) => {
-        const results = records.map((record) => {
-          return {
-            id: record.id,
-            ...record.fields
-          }
-        })
-        fetchNextPage()
-        onSuccess(results)
-      }, (err) => {
-        if (err) {
-          console.error(err)
-          return
-        }
+    const loadData = async () => {
+      // load resolutions
+      await loadAirtableData('2021', (results) => {
+        setResolutions((resolutions) => [...resolutions, ...results])
+      })
+      // load players
+      await loadAirtableData('Participants', (results) => {
+        setPlayers((players) => [...players, ...results])
       })
     }
 
-    // load resolutions
-    loadAirtableData('2021',setResolutions)
-
-    // load players
-    loadAirtableData('Participants',setPlayers)
+    loadData()
   }, [])
 
   let submitters = Object.fromEntries(players.map(person => [person.name, 0]))
